@@ -18,16 +18,9 @@ library(quanteda)
 library(readtext)
 library(quanteda.textmodels)
 ```
-Loading data
-```{r}
-setwd("S:/Indiana Research & Evaluation/Matthew Hanauer/AMAData")
-AMAData = read.csv("AMAData.csv", header = TRUE, na.strings = c("NULL"))
-```
+
 Try installing package
 ```{r}
-
-setwd("S:/Indiana Research & Evaluation/Matthew Hanauer/AMAData")
-edu_dat = read.csv("Education.csv", header = TRUE)
 
 setwd("T:/CRI_Research/telehealth_evaluation/data_codebooks/satisfaction/clinician_qual")
 other_barriers_home_complete_dat = read.csv("other_barriers_home_complete_dat.csv", header = TRUE)
@@ -111,3 +104,96 @@ colnames(edu_ama) = "Edu"
 
 write.csv(edu_ama, "edu_ama.csv", row.names = FALSE)
 ```
+pred_class_snap_
+##############
+Now try with Jess's codes
+##################
+Load data and aggregate codes into four or five
+```{r}
+setwd("T:/CRI_Research/telehealth_evaluation/data_codebooks/satisfaction/clinician_qual")
+other_barriers_snap_dat = read.csv("other_snap_barriers_complete.csv", header = TRUE)
+other_barriers_snap = other_barriers_snap_dat
+### Just try theme 1
+other_barriers_snap$theme = other_barriers_snap$Theme.1
+other_barriers_snap = other_barriers_snap[,c(1,5)]
+other_barriers_snap$theme = as.factor(other_barriers_snap$theme)
+describe.factor(other_barriers_snap$theme)
+### Try changing
+other_barriers_snap$theme = recode(other_barriers_snap$theme, "Less user-friendly" = "No or limited use", "No  for it" = "No or limited ", "Not applicable to services" = "No or limited ", "No need" = "No or limited use", "Efficiency" =  "No or limited ", "Poor training" = "Tech and training issues", "Technology issues" = "Tech and training issues", "Unaware of platform" = "Tech and training issues", "Misinformed" = "Tech and training issues", "No access to platform" = "Tech and training issues", "Technology" = "Tech and training issues", "Clinician prefers other"= "Client / Clinician prefer / barrier", "Client barriers" = "Client / Clinician prefer / barrier", "Client prefers other" = "Client / Clinician prefer / barrier", "Clinician personal barrier" = "Client / Clinician prefer / barrier", "Clinician personal barrier" = "Client / Clinician prefer / barrier", "Time constraints" = "Client / Clinician prefer / barrier", "Client personal barrier" = "Client / Clinician prefer / barrier", "Not compensated for training" = "Client / Clinician prefer / barrier")
+describe.factor(other_barriers_snap$theme)
+# Following codes as :
+# No or limited: Less r-friendly, No  for it, Not applicable to services, No need, Efficiency 
+# tech and training issues: Poor training, Technology issues, Unaware of platform, Misinformed, No access to platform, Technology  
+# Client or clincian preferences and barriers: Clinician prefers other, Client barriers, Client prefers other,  Clinician personal barrier, Time constraints, Client personal barrier, Not compensated for training
+# Get these Clinican prefers other, Misinformed 
+### Limit to just the codes
+other_barriers_snap
+
+other_barriers_snap_remain = other_barriers_snap[-c(1:111),]
+other_barriers_snap = other_barriers_snap[1:111,]
+dim(other_barriers_snap)
+```
+Now put together the data set together
+```{r}
+other_barriers_snap_class = other_barriers_snap
+
+other_barriers_snap_class$other_snap_barriers = as.character(other_barriers_snap_class$other_snap_barriers)
+other_barriers_snap_class_corp = corpus(other_barriers_snap_class$other_snap_barriers, docvars = data.frame(theme =  other_barriers_snap_class$theme))
+
+summary(other_barriers_snap_class_corp)
+docvars(other_barriers_snap_class_corp)
+other_barriers_snap_corp_dfm = dfm(other_barriers_snap_class_corp, tolower = TRUE)
+dim(other_barriers_snap_corp_dfm)
+summary(other_barriers_snap_corp_dfm)
+
+```
+Create the training and testing data set
+```{r}
+n = 111/2
+raw_train_snap <- other_barriers_snap_class[1:n,]
+raw_test_snap <- other_barriers_snap_class[n:nrow(other_barriers_snap_class),]
+dim(raw_train_snap)
+dim(raw_test_snap)
+
+other_barriers_snap_corp_dfm = other_barriers_snap_corp_dfm %>% dfm(remove = stopwords("english"), stem = TRUE)
+
+dfm_train_snap <- other_barriers_snap_corp_dfm[1:n,]
+dfm_test_snap <- other_barriers_snap_corp_dfm[n:nrow(other_barriers_snap_corp_dfm),]
+
+dfm_matached_snap = dfm_match(dfm_test_snap, features = featnames(dfm_train_snap))
+docvars(dfm_matached_snap)
+dim(dfm_train_snap)
+```
+Now build the model
+https://tutorials.quanteda.io/machine-learning/nb/
+```{r}
+dim(raw_test_snap)
+dim(dfm_train_snap)
+model_train_snap = textmodel_nb(dfm_train_snap, raw_train_snap$theme)
+summary(model_train_snap)
+```
+Now get predictions
+Precision, recall and the F1 score are frequently d to assess the classification performance. Precision is measured as TP / (TP + FP), where TP are the number of true positives and FP the false positives. Recall divides the false positives by the sum of true positives and false negatives TP / (TP + FN). Finally, the F1 score is a harmonic mean of precision and recall 2 * (Precision * Recall) / (Precision + Recall).
+```{r}
+actual_class_snap_ = docvars(dfm_train_snap_)
+pred_class_snap_ = predict(model_train_snap_, newdata = dfm_matached_snap_)
+
+length(pred_class)
+
+tab_snap_ =  table(pred_class_snap_, actual_class_snap_$theme)
+confusionMatrix(tab_snap_, mode = "everything")
+```
+Now put together full education variable to put into AMA data set
+```{r}
+
+pred_full_df = data.frame(pred_full)
+head(pred_full_df)
+raw_full = data.frame(pred_full = raw_test_class$CodesMatt)
+
+edu_ama = rbind(raw_full, pred_full_df)
+
+colnames(edu_ama) = "Edu"
+
+write.csv(edu_ama, "edu_ama.csv", row.names = FALSE)
+```
+
