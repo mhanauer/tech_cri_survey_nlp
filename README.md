@@ -119,7 +119,7 @@ other_barriers_snap = other_barriers_snap[,c(1,5)]
 other_barriers_snap$theme = as.factor(other_barriers_snap$theme)
 describe.factor(other_barriers_snap$theme)
 ### Try changing
-other_barriers_snap$theme = recode(other_barriers_snap$theme, "Less user-friendly" = "No or limited use", "No  for it" = "No or limited ", "Not applicable to services" = "No or limited ", "No need" = "No or limited use", "Efficiency" =  "No or limited ", "Poor training" = "Tech and training issues", "Technology issues" = "Tech and training issues", "Unaware of platform" = "Tech and training issues", "Misinformed" = "Tech and training issues", "No access to platform" = "Tech and training issues", "Technology" = "Tech and training issues", "Clinician prefers other"= "Client / Clinician prefer / barrier", "Client barriers" = "Client / Clinician prefer / barrier", "Client prefers other" = "Client / Clinician prefer / barrier", "Clinician personal barrier" = "Client / Clinician prefer / barrier", "Clinician personal barrier" = "Client / Clinician prefer / barrier", "Time constraints" = "Client / Clinician prefer / barrier", "Client personal barrier" = "Client / Clinician prefer / barrier", "Not compensated for training" = "Client / Clinician prefer / barrier")
+other_barriers_snap$theme = recode(other_barriers_snap$theme, "Less user-friendly" = "No or limited use", "No use for it" = "No or limited use", "Not applicable to services" = "No or limited use", "No need" = "No or limited use", "Efficiency" =  "No or limited use", "Poor training" = "Tech and training issues", "Technology issues" = "Tech and training issues", "Unaware of platform" = "Tech and training issues", "Misinformed" = "Tech and training issues", "No access to platform" = "Tech and training issues", "Technology" = "Tech and training issues", "Clinician prefers other"= "Client / Clinician prefer / barrier", "Client barriers" = "Client / Clinician prefer / barrier", "Client prefers other" = "Client / Clinician prefer / barrier", "Clinician personal barrier" = "Client / Clinician prefer / barrier", "Clinician personal barrier" = "Client / Clinician prefer / barrier", "Time constraints" = "Client / Clinician prefer / barrier", "Client personal barrier" = "Client / Clinician prefer / barrier", "Not compensated for training" = "Client / Clinician prefer / barrier")
 describe.factor(other_barriers_snap$theme)
 # Following codes as :
 # No or limited: Less r-friendly, No  for it, Not applicable to services, No need, Efficiency 
@@ -127,11 +127,12 @@ describe.factor(other_barriers_snap$theme)
 # Client or clincian preferences and barriers: Clinician prefers other, Client barriers, Client prefers other,  Clinician personal barrier, Time constraints, Client personal barrier, Not compensated for training
 # Get these Clinican prefers other, Misinformed 
 ### Limit to just the codes
-other_barriers_snap
+other_barriers_snap$theme = as.character(other_barriers_snap$theme)
 
 other_barriers_snap_remain = other_barriers_snap[-c(1:111),]
 other_barriers_snap = other_barriers_snap[1:111,]
 dim(other_barriers_snap)
+
 ```
 Now put together the data set together
 ```{r}
@@ -154,12 +155,13 @@ raw_train_snap <- other_barriers_snap_class[1:n,]
 raw_test_snap <- other_barriers_snap_class[n:nrow(other_barriers_snap_class),]
 dim(raw_train_snap)
 dim(raw_test_snap)
+typeof(raw_train_snap)
 
 other_barriers_snap_corp_dfm = other_barriers_snap_corp_dfm %>% dfm(remove = stopwords("english"), stem = TRUE)
 
 dfm_train_snap <- other_barriers_snap_corp_dfm[1:n,]
 dfm_test_snap <- other_barriers_snap_corp_dfm[n:nrow(other_barriers_snap_corp_dfm),]
-
+dim(dfm_train_snap)
 dfm_matached_snap = dfm_match(dfm_test_snap, features = featnames(dfm_train_snap))
 docvars(dfm_matached_snap)
 dim(dfm_train_snap)
@@ -167,20 +169,20 @@ dim(dfm_train_snap)
 Now build the model
 https://tutorials.quanteda.io/machine-learning/nb/
 ```{r}
-dim(raw_test_snap)
+dim(raw_train_snap)
 dim(dfm_train_snap)
-model_train_snap = textmodel_nb(dfm_train_snap, raw_train_snap$theme)
+model_train_snap = textmodel_nb(dfm_train_snap, as.character(raw_train_snap$theme))
 summary(model_train_snap)
 ```
 Now get predictions
 Precision, recall and the F1 score are frequently d to assess the classification performance. Precision is measured as TP / (TP + FP), where TP are the number of true positives and FP the false positives. Recall divides the false positives by the sum of true positives and false negatives TP / (TP + FN). Finally, the F1 score is a harmonic mean of precision and recall 2 * (Precision * Recall) / (Precision + Recall).
 ```{r}
-actual_class_snap_ = docvars(dfm_train_snap_)
-pred_class_snap_ = predict(model_train_snap_, newdata = dfm_matached_snap_)
+actual_class_snap = docvars(dfm_train_snap)
+pred_class_snap = predict(model_train_snap, newdata = dfm_matached_snap)
 
-length(pred_class)
-
-tab_snap_ =  table(pred_class_snap_, actual_class_snap_$theme)
+length(pred_class_snap)
+length(actual_class_snap$theme)
+tab_snap =  table(pred_class_snap, actual_class_snap$theme)
 confusionMatrix(tab_snap_, mode = "everything")
 ```
 Now put together full education variable to put into AMA data set
