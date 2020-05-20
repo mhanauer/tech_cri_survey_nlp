@@ -78,6 +78,8 @@ docvars(dfm_matached)
 Now build the model
 https://tutorials.quanteda.io/machine-learning/nb/
 ```{r}
+length(raw_train$theme)
+
 model_train = textmodel_nb(dfm_train, raw_train$theme)
 summary(model_train)
 ```
@@ -86,7 +88,9 @@ Now get predictions
 actual_class = docvars(dfm_matached)
 pred_class = predict(model_train, newdata = dfm_matached)
 
+dim(dfm_matached)
 length(pred_class)
+length(actual_class$theme)
 
 tab =  table(pred_class, actual_class$theme)
 confusionMatrix(tab, mode = "everything")
@@ -162,9 +166,10 @@ other_barriers_snap_corp_dfm = other_barriers_snap_corp_dfm %>% dfm(remove = sto
 dfm_train_snap <- other_barriers_snap_corp_dfm[1:n,]
 dfm_test_snap <- other_barriers_snap_corp_dfm[n:nrow(other_barriers_snap_corp_dfm),]
 dim(dfm_train_snap)
+dim(dfm_test_snap)
 dfm_matached_snap = dfm_match(dfm_test_snap, features = featnames(dfm_train_snap))
 docvars(dfm_matached_snap)
-dim(dfm_train_snap)
+dim(dfm_matached_snap)
 ```
 Now build the model
 https://tutorials.quanteda.io/machine-learning/nb/
@@ -177,13 +182,13 @@ summary(model_train_snap)
 Now get predictions
 Precision, recall and the F1 score are frequently d to assess the classification performance. Precision is measured as TP / (TP + FP), where TP are the number of true positives and FP the false positives. Recall divides the false positives by the sum of true positives and false negatives TP / (TP + FN). Finally, the F1 score is a harmonic mean of precision and recall 2 * (Precision * Recall) / (Precision + Recall).
 ```{r}
-actual_class_snap = docvars(dfm_train_snap)
+actual_class_snap = docvars(dfm_matached_snap)
 pred_class_snap = predict(model_train_snap, newdata = dfm_matached_snap)
 
 length(pred_class_snap)
 length(actual_class_snap$theme)
 tab_snap =  table(pred_class_snap, actual_class_snap$theme)
-confusionMatrix(tab_snap_, mode = "everything")
+confusionMatrix(tab_snap, mode = "everything")
 ```
 Now put together full education variable to put into AMA data set
 ```{r}
