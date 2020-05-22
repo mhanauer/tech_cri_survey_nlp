@@ -18,7 +18,7 @@ library(quanteda)
 library(readtext)
 library(quanteda.textmodels)
 ```
-
+Example from developer: https://tutorials.quanteda.io/machine-learning/nb/
 Try installing package
 ```{r}
 
