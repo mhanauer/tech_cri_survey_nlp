@@ -133,6 +133,7 @@ describe.factor(other_barriers_snap$theme)
 ### Limit to just the codes
 other_barriers_snap$theme = as.character(other_barriers_snap$theme)
 
+### Only grabing data that was coded
 other_barriers_snap_remain = other_barriers_snap[-c(1:111),]
 other_barriers_snap = other_barriers_snap[1:111,]
 dim(other_barriers_snap)
